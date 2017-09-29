@@ -9,8 +9,8 @@ app = Flask(__name__)
 def index():
     if request.method == 'GET':
         return "OK", 200
-        gh = Github()
-        print(gh, file=sys.stdout)
+        #gh = Github()
+        #print(gh, file=sys.stdout)
     elif request.method == 'POST':
         print(request.headers.get('X-GitHub-Event'), file=sys.stdout)
         # ensure the callback is coming from github
@@ -20,7 +20,6 @@ def index():
         payload=json.loads(request.data)
         #print payload
 
-        return json.dumps({'msg': 'thanks for that'})
         #if request.headers.get('X-GitHub-Event') != "push":
         #    return json.dumps({'msg': "wrong event type"})
 
@@ -28,6 +27,7 @@ def index():
         # TODO: pull credentials from the environment
         gh = Github()
         print(gh, file=sys.stdout)
+        return json.dumps({'msg': 'thanks for that'})
     else:
         return "not a supported method", 400
 if __name__ == '__main__':
