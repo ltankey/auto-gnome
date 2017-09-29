@@ -1,0 +1,7 @@
+{
+    "dev": {
+	"s3_bucket": "chose your unique bucket name",
+	"app_function": "app.app",
+	"role_name": "you might need to define a role here"
+    }
+}
