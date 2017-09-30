@@ -84,11 +84,16 @@ class Config(object):
         url = url_template.format(repo_fullname, branch)
         raw_yml = requests.get(url).text
         # FIXME: handle non-200 codes
+        # TODO: decide if we should be iterating over 404s/config file names
         # FIXME: validate the yaml
         self._yaml = raw_yml
         return raw_yml
 
     def get_activities(self):
+        """
+        This is the magic method. It processes the config (from .gnome.yml)
+        and instantiates the policies, which are presumably dispatched.
+        """
         activities = []
         bad_news = []
         if not self.yaml_is_valid():
