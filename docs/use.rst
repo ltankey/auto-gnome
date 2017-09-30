@@ -1,5 +1,5 @@
 Using a Gnome
--------------
+=============
 
 You do not need to install or run this code to use it.
 

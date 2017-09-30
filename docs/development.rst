@@ -3,6 +3,7 @@ Development
 
 There are two topics really, policies and the gnome itself.
 
+By the way, all the code is in GitHub (duh) https://github.com/bugflow/gh-ticket-gnome
 
 
 Hacking the gnome itself
