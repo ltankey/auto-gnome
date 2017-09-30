@@ -76,19 +76,14 @@ class Config(object):
     def get_yaml(self):
         if self._yaml:
             return self._yaml
-        # first, call the contents API to get the file metadata
-        contents_url_payload = self.payload['contents_url']
-        contents_template = str(contents_url_payload).replace('{+path}','{}')
-        contents_url = contents_template.format('.gnome.yml')
-        # FIXME: cache the request to contents_url
-        contents = requests.get(contents_url).json()
-        # then, from the metadata, get the file itself
-        #
-        # FIXME: this double-tap is lame
-        # maybe we should only do the double-tap after a heuristic guess
-        # fails
-        # FIXME: cache the request for download_url
-        raw_yml = requests.get(contents['download_url']).text
+        # TODO: figure out what do we do about branches
+        # FIXME: always use the appropriate branch
+        branch="master"
+        url_template = "https://raw.githubusercontent.com/{}/{}/.gnome.yml"
+        repo_fullname = self.payload['repository']['full_name']
+        url = url_template.format(repo_fullname, branch)
+        raw_yml = requests.get(url).text
+        # FIXME: handle non-200 codes
         # FIXME: validate the yaml
         self._yaml = raw_yml
         return raw_yml
@@ -96,10 +91,14 @@ class Config(object):
     def get_activities(self):
         activities = []
         bad_news = []
-        parsed_yaml = yaml.load(self.get_yaml())
-        # FIXME: validate the gnome_yaml
-            
-        for policy_name in parsed_yaml['policies']:
+        if not self.yaml_is_valid():
+            # FIXME: figure out what to do without valid config
+            raise Exception("debug this please")
+        
+        # FIXME: get_yaml should return parsed yaml (and be named differently)
+        parsed_yml = yaml.load(self.get_yaml())
+
+        for policy_name in parsed_yml['policies']:
             if policy_name in FORBIDDEN_POLICY_NAMES:
                 bad_news.append((policy_name, "forbidden"))  
             elif policy_name not in dir(policies):
@@ -117,6 +116,16 @@ class Config(object):
 
         return activities
 
+    def yaml_is_valid(self):
+        raw_yml = self.get_yaml()
+        parsed_yml =yaml.load(raw_yml)
+        if 'policies' not in parsed_yml:
+            if DEBUG:
+                msg = "policies not in parsed yaml"
+                print(msg, file=sys.stdout)
+                print(parsed_yml, file=sys.stdout)
+            return False
+        return True
 
 class CallbackEvent(object):
     """
@@ -146,11 +155,18 @@ class CallbackEvent(object):
         # FIXME: unit-test coverage for callback validation required
         try:
             p = self.payload()
-            if not 'contents_url' in p:
+            if not 'repository' in p:
                 if DEBUG:
-                    msg = "payload does not contain a contents_url"
+                    msg = "payload does not contain a repository"
                     print(msg, file=sys.stdout)
                     print(json.dumps(p, indent=4), file=sys.stdout)
+                return False
+            repo_data = p['repository']
+            if 'full_name' not in repo_data:
+                if DEBUG:
+                    msg = "repo_data does not have a full_name"
+                    print(msg, file=sys.stdout)
+                    print(json.dumps(repo_data, indent=4), file=sys.stdout)
                 return False
             return True
         except InvalidPayloadJSONError:
