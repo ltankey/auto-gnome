@@ -1,10 +1,16 @@
 from flask import Flask, request, abort
+from github import Github
+import json
+import requests
+import sys
+import yaml
 from util import (
     gh_event_source_is_valid,
 )
-from github import Github
-import json
-import sys
+import policies
+
+# verbose logging
+DEBUG=True
 
 app = Flask(__name__)
 
@@ -31,33 +37,19 @@ def index():
         # ...
         cbe = CallbackEvent(request)
         if not cbe.is_valid():
-            msg = "unable to parse payload json"
+            msg = "callback payload does not appear valid"
             print (msg, file=sys.stdout)
             return msg, 400
 
         config = Config(cbe)
-        for policy in config.get_policies():
-            policy.dispatch_gnome()
+        for activity in config.get_activities():
+            activity.dispatch_gnome()
         
         # FIXME: maybe refactor everything to use PubSubHubHub?
         # TODO: figure out what kind of response is appropriate
         return json.dumps({'msg': 'thanks for that'}), 200
     else:
         return "not a supported method", 400
-
-
-class Policy(object):
-    def __init__(self, callback):
-        self.callback=callback
-
-
-class DumbPolicy(Policy):
-    def dispatch_gnome(self):
-        print("dumb policy", file=sys.stdout)
-        # eyeball the payload
-        pl = self.callback.payload()
-        js = json.dumps(pl, sort_keys=True, indent=4) 
-        print(js, file=sys.stdout)
 
 
 class Config(object):
@@ -69,32 +61,45 @@ class Config(object):
     def get_yaml(self):
         if self._yaml:
             return self._yaml
-        return "TODO"
+        # first, call the contents API to get the file metadata
+        contents_url_payload = self.payload['contents_url']
+        contents_template = str(contents_url_payload).replace('{+path}','{}')
+        contents_url = contents_template.format('.gnome.yml')
+        contents = requests.get(contents_url).json()
+        # then, from the metadata, get the file itself
+        #
+        # FIXME: this double-tap is lame
+        # maybe we should only do the double-tap after a heuristic guess
+        # fails
+        gnome_yml = requests.get(contents['download_url']).text
+        # FIXME: validate the yaml
+        self._yaml = gnome_yml
+        return gnome_yml
 
-    def get_policies(self):
-        yaml = self.get_yaml()
-        # TODO: parse the yaml and return pre-configured policy instances
-        policies = (
-            DumbPolicy(self.callback),
-        )
-        # something like:
-        #
-        # policies = []
-        # bad_news = []
-        # for policy_name in config:
-        #     if policy_name not in dir(policy_module):
-        #         bad_news.append(policy_name)
-        #     else:
-        #         policy_module = eval('policy_module.{}'.format(policy_name)
-        #         kw_params = config.get_params(policy_name)
-        #         policies.append(policy_class(kw_params))
-        # if len(bad_news)>0:
-        #     do something with the bad news
-        # return policies
-        #
+    def get_activities(self):
+        gnome_yaml = yaml.load(self.get_yaml())
+        activities = []
+        bad_news = []
+        # stub
+        #policies =(DumbPolicy(self.callback),)
+
+        for policy_name in gnome_yaml['policies']:
+            # DEBUG
+            print(policy_name, file=sys.stdout)
+            if policy_name not in dir(policies):
+                bad_news.append((policy_name, "not found"))
+            elif policy_name == "Policy":
+                bad_news.append((policy_name, "forbidden"))
+            else:
+                # auto-flagilate for use of eval
+                policy_class = eval('policies.{}'.format(policy_name))
+                activities.append(policy_class(self.callback))
+        if len(bad_news)>0:
+            #do something with the bad news
+            print("BAD NEWS: {}".format(bad_news), file=sys.stdout)
         # and we have a module containing all the policy classes
         # and all the policy classes provide a dispatch_gnome method
-        return policies
+        return activities
 
 
 class InvalidPayloadJSONError(Exception): pass
@@ -120,10 +125,17 @@ class CallbackEvent(object):
 
     def is_valid(self):
         try:
-            self.payload()
+            p = self.payload()
+            if not 'contents_url' in p:
+                if DEBUG:
+                    msg = "payload does not contain a contents_url"
+                    print(msg, file=sys.stdout)
+                    print(json.dumps(p, indent=4), file=sys.stdout)
+                return False
             return True
         except InvalidPayloadJSONError:
             return False
 
 if __name__ == '__main__':
     app.run()
+

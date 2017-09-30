@@ -3,3 +3,4 @@ zappa
 PyGithub
 requests
 ipaddress
+PyYAML
