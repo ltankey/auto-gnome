@@ -1,2 +1,4 @@
 sphinx
+paver
+cogapp
 -r ../src/requirements.txt

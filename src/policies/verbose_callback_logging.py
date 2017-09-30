@@ -4,9 +4,6 @@ from . import Policy
 
 class VerboseCallbackLogging(Policy):
     """
-    Verbose Callback Logging
-    ========================
-
     This policy is very simple, it is primarially used for debugging
     the ticket gnome itself.
 

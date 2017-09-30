@@ -1,14 +1,20 @@
 import sys
 
 class Policy(object):
+    """
+    Abstract base-class. Inherited by policies that actually do stuff.
+
+    Don't put this in your `.gnome.yml`, it's ignored.
+    """
     def __init__(self, callback):
         self.callback=callback
 
     # this should probably accept arbitrary kw arguments
     def dispatch_gnome(self):
-        """ The method that does the stuff you want done
-        
-        This method must be over-ridden in actual policies
+        """
+        The method that does the stuff you want done.
+
+        This method must be over-ridden in actual policies.
         """
         class AbstractBaseGnomePolicyCanNotBeDispatchedError(Exception): pass
         raise AbstractBaseGnomePolicyCanNotBeDispatchedError()
