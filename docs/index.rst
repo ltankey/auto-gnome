@@ -9,10 +9,3 @@ GitHub Ticket Gnome
    operations
    development
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
