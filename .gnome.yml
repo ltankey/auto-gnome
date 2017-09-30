@@ -1,0 +1,4 @@
+policies:
+ - DumbPolicy
+ - NonExistantPolicy
+ - SortingHat
