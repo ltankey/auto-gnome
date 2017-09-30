@@ -29,7 +29,7 @@ class VerboseCallbackLogging(Policy):
 
         
         """
-        print("dumb policy", file=sys.stdout)
+        print("verbose callback logging enabled", file=sys.stdout)
         # the inherited constructor creates self.callback
         callback_payload = self.callback.payload()
         # all this policy does is log the callback payload to stdout
