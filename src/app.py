@@ -46,7 +46,7 @@ def index():
         config = Config(cbe)
         for activity in config.get_activities():
             activity.dispatch_gnome()
-        
+
         # FIXME: maybe refactor everything to use PubSubHubHub?
         # TODO: figure out what kind of response is appropriate
         return json.dumps({'msg': 'thanks for that'}), 200
