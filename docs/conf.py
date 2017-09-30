@@ -1,5 +1,9 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../src'))
+
 extensions = ['sphinx.ext.autodoc',
-    'sphinx.ext.viewcode']
+              'sphinx.ext.viewcode']
 templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
@@ -9,7 +13,7 @@ author = 'Team Bugflow'
 version = '0.0.0'
 release = '0.0.0'
 language = None
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '.venv']
 pygments_style = 'sphinx'
 todo_include_todos = False
 html_theme = 'alabaster'
@@ -25,26 +29,11 @@ html_sidebars = {
 }
 htmlhelp_basename = 'GitHubTicketGnomedoc'
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
+    'papersize': 'a4paper',
 }
 latex_documents = [
     (master_doc, 'GitHubTicketGnome.tex', 'GitHub Ticket Gnome Documentation',
      'Team Bugflow', 'manual'),
-]
-man_pages = [
-    (master_doc, 'githubticketgnome', 'GitHub Ticket Gnome Documentation',
-     [author], 1)
 ]
 texinfo_documents = [
     (master_doc, 'GitHubTicketGnome', 'GitHub Ticket Gnome Documentation',
