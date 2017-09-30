@@ -21,5 +21,5 @@ class Policy(object):
 
 
 # this is where policies are registered
-from .verbose_callback_logging import VerboseCallbackLogging
-from .sorting_hat import SortingHat
+from plugins.verbose_callback_logging import VerboseCallbackLogging
+from plugins.sorting_hat import SortingHat

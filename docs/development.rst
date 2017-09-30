@@ -9,20 +9,68 @@ By the way, all the code is in GitHub (duh) https://github.com/bugflow/gh-ticket
 Hacking the gnome itself
 ------------------------
 
+.. graphviz::
+
+   digraph d {
+      node[shape=rectangle]
+
+      subgraph cluster_codebase {
+         label="codebase";
+	 app [label="app.py\n(process callbacks)"];
+	 util [label="util.py\n(abstraction)"];
+	 policy [label="policies/__init__.py\n(register plugins)"];
+	 plugins [label="plugins/*\n(do interesting things)"];
+         app -> util -> policy -> plugins;
+      }
+      GitHub
+      callback [shape=ellipse]
+      ghapi [shape=ellipse label="GitHub\nAPI v3"]
+      callback -> GitHub [dir=back]
+      app -> callback [dir=back];
+      util -> ghapi;
+      GitHub -> ghapi [dir=back];
+      anything [shape=ellipse];
+      plugins [shape="folder"];
+      plugins -> anything;
+      plugins -> ghapi;
+      humans -> GitHub;
+   }
+
+
+src/app.py
+^^^^^^^^^^
+
 See `src/app.py` for the very basic flask app. It's job is to receive callback from GitHub and process them.
 
 .. automodule:: app
    :members:
    :undoc-members:
 
+
+src/utils.py
+^^^^^^^^^^^^
+
 The flask app process callbacks with code if gets from `src/utils.py`. The result of it's callback processing is to call the `dispatch_gnome()` method on every policy that is configured for the repo (that the was the source of the callback event).
 
 .. automodule:: util
    :members:
    :undoc-members:
-      
+
+
+src/tests.py
+^^^^^^^^^^^^
 
 TODO: when we have a `tests.py`, automodule that too.
+
+
+src/policies/__init__.py
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The util module instantiates the `policy` module. This is a very simple thing, all it does is import the relevant classes (from modules in the plugins directory).
+
+When you make a new plugin, it won't do anything until you register it by importing the relevant class into policies/__int__.py
+
+Browse from there the plugins (see next section, Hacking Policies)...
 
 
 Hacking Policies
@@ -68,22 +116,6 @@ VerboseCallbackLogging
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: policies.VerboseCallbackLogging
-   :members:
-   :undoc-members:
-
-
-sorting_hat
-^^^^^^^^^^^
-
-.. autoclass:: policies.sorting_hat
-   :members:
-   :undoc-members:
-
-
-verbose_callback_logging
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: policies.verbose_callback_logging
    :members:
    :undoc-members:
 

@@ -1,6 +1,6 @@
 import sys
 import json
-from . import Policy
+from policies import Policy
 
 class VerboseCallbackLogging(Policy):
     """

@@ -3,7 +3,8 @@ import sys
 sys.path.insert(0, os.path.abspath('../src'))
 
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.viewcode']
+              'sphinx.ext.viewcode',
+              'sphinx.ext.graphviz']
 templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
