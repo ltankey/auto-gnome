@@ -1,5 +1,5 @@
-GitHub Ticket Gnome
-===================
+Bugflow Auto Gnome
+==================
 
 .. toctree::
    :maxdepth: 2

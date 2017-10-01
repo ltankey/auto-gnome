@@ -8,7 +8,7 @@ extensions = ['sphinx.ext.autodoc',
 templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
-project = 'GitHub Ticket Gnome'
+project = 'Bugflow Auto Gnome'
 copyright = '2017, Team Bugflow'
 author = 'Team Bugflow'
 version = '0.0.0'
@@ -28,16 +28,16 @@ html_sidebars = {
         'donate.html',
     ]
 }
-htmlhelp_basename = 'GitHubTicketGnomedoc'
+htmlhelp_basename = 'BugflowAutoGnomedoc'
 latex_elements = {
     'papersize': 'a4paper',
 }
 latex_documents = [
-    (master_doc, 'GitHubTicketGnome.tex', 'GitHub Ticket Gnome Documentation',
+    (master_doc, 'BugflowAutoGnome.tex', 'Bugflow Auto Gnome Documentation',
      'Team Bugflow', 'manual'),
 ]
 texinfo_documents = [
-    (master_doc, 'GitHubTicketGnome', 'GitHub Ticket Gnome Documentation',
-     author, 'GitHubTicketGnome', 'One line description of project.',
+    (master_doc, 'BugflowAutoGnome', 'Bugflow Auto Gnome Documentation',
+     author, 'BugflowAutoGnome', 'One line description of project.',
      'Miscellaneous'),
 ]
