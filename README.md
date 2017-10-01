@@ -2,6 +2,6 @@
 
 GitHub Ticket Gnome
 
-See https://gh-ticket-gnome.readthedocs.org/
+See https://auto-gnome.readthedocs.org/
 
 Inspired by http://wiki.c2.com/?WikiGnome
