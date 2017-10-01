@@ -115,9 +115,12 @@ class Config(object):
                 # (policy classes must have a dispatch_gnome method)
                 activities.append(policy_class(self.callback))
 
-        if len(bad_news)>0:
+        if len(bad_news) > 0:
             # FIXME: do something smarter with bad news
-            print("BAD NEWS: {}".format(bad_news), file=sys.stdout)
+            # maybe a BadNewsProcessor?
+            # or just conventional logging
+            msg = "BAD NEWS: {}".format(bad_news)
+            print(msg, file=sys.stdout)
 
         return activities
 
