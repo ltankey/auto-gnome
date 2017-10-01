@@ -179,8 +179,3 @@ class CallbackEvent(object):
             return True
         except InvalidPayloadJSONError:
             return False
-
-
-if __name__ == "__main__":
-    print("TODO: make tests suite")
-
