@@ -7,6 +7,7 @@ The testing strategy for the IP validator is:
 """
 import unittest
 import json
+from mocks import mock_get
 
 # hackery
 import sys
@@ -17,48 +18,12 @@ sys.path.append(
                 os.path.dirname(__file__),
                 os.path.pardir)))
 
-import util
-
 # patchery
-class MockResponse:
-    """
-    Mock response object that always returns the same canned json
-    """
-    def json(self):
-        return json.loads('''{
-  "verifiable_password_authentication": true,
-  "github_services_sha": "c8675558dc838e7a771f482c0636f607e1d9d920",
-  "hooks": [
-    "192.30.252.0/22",
-    "185.199.108.0/22"
-  ],
-  "git": [
-    "192.30.252.0/22",
-    "185.199.108.0/22"
-  ],
-  "pages": [
-    "192.30.252.153/32",
-    "192.30.252.154/32"
-  ],
-  "importer": [
-    "54.87.5.173",
-    "54.166.52.62",
-    "23.20.92.3"
-  ]
-}''')
-
-def mock_get(x):
-    """
-    Mock get method that ignores it's parameter and returns
-    the same mock response regardless.
-    """
-    return MockResponse()
-
+import util
 util.requests.get = mock_get
 
-#
-# now the actual test code...
-#
+
+# actual test code...
 BAD_MOCK_ADDRESSES = ('193.21.243.7', '185.198.107.43')
 GOOD_MOCK_ADDRESSES = (
     '192.30.252.1', '192.30.252.254','192.30.252.13',
