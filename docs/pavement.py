@@ -7,7 +7,7 @@ import paver.doctools
 from paver.setuputils import setup, Bunch
 
 setup(
-    name = "gh-ticket-gnome",
+    name = "auto-gnome",
     packages = [".",]
 )
 

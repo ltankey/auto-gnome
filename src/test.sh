@@ -7,7 +7,7 @@ curl -H "Content-Type: application/json" -X POST -d '{
     "foo":"xyz",
     "bar":"abc",
     "repository": {
-        "full_name": "bugflow/gh-ticket-gnome"
+        "full_name": "bugflow/auto-gnome"
     }
 }' $DEV_ENDPOINT
 
