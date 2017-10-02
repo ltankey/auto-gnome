@@ -34,7 +34,11 @@ class MockResponse:
 
 class MockCallback(object):
     def payload(self):
-        return {'repository':{"full_name": "billgates/windows95"}}
+        # It needs to be something that we know exists,
+        # and something we have access to.
+        return {
+            'repository': {
+                "full_name": "bugflow/auto-gnome"}}
 
 
 def mock_get(x):
