@@ -29,19 +29,34 @@ GOOD_MOCK_ADDRESSES = (
     '192.30.252.1', '192.30.252.254','192.30.252.13',
     '185.199.108.1', '185.199.108.254', '185.199.108.78')
 
-class IPValidationTestCase(unittest.TestCase):
+class EventSourceValidatorTestCase(unittest.TestCase):
     def test_localhost_is_valid(self):
+        """
+        Given the ip string is 127.0.0.1
+        When testing ip_str_is_valid
+        Then validity is True
+        """
         val = gh.EventSourceValidator()
         validity = val.ip_str_is_valid('127.0.0.1')
         self.assertTrue(validity)
 
     def test_good_addresses_are_valid(self):
+        """
+        Given the ip string is valid
+        When testing ip_str_is_valid
+        Then validity is True
+        """
         val = gh.EventSourceValidator()
         for addr in GOOD_MOCK_ADDRESSES:
             validity = val.ip_str_is_valid(addr)
             self.assertTrue(validity)
 
     def test_bad_addresses_are_invalid(self):
+        """
+        Given the ip string is not valid
+        When testing ip_str_is_valid
+        Then validity is False
+        """
         val = gh.EventSourceValidator()
         for addr in BAD_MOCK_ADDRESSES:
             validity = val.ip_str_is_valid(addr)
@@ -49,7 +64,12 @@ class IPValidationTestCase(unittest.TestCase):
 
 
 class RepoTestCase(unittest.TestCase):
-    def test_init(self):
+    def test_init_no_error(self):
+        """
+        Given I have a valid callback payload
+        When I initiate a Repo
+        Then no errors are raised
+        """
         cb = MockCallback()
         payload = cb.payload()
         # we require construction without exception
@@ -216,5 +236,30 @@ class RepoCreateMilestoneTestCase(unittest.TestCase):
         pass  # FIXME
 
 
+class MilestoneInitTestCase(unittest.TestCase):
+    def test_repo_validation(self):
+        pass  # FIXME
+    def test_milestone_validation(self):
+        pass  # FIXME
+
+
+class MilestoneOpenTicketsTestCase(unittest.TestCase):
+    def test_all_open_tickets_returned(self):
+        pass  # FIXME
+    def test_no_extranious_tickets_returned(self):
+        pass  # FIXME
+
+
+class IssueInitTestCase(unittest.TestCase):
+    pass
+
+
+class IssueHasMilestoneTestCase(unittest.TestCase):
+    pass
+
+
+class IssueMoveToMilestoneTestCase(unittest.TestCase):
+    pass
+    
 if __name__ == '__main__':
     unittest.main()
