@@ -160,7 +160,7 @@ class CallbackEvent(object):
             raise InvalidPayloadJSONError()
 
     def headers(self):
-        headers = []
+        headers = {}
         for k in ('X-Hub-Signature',
                   'X-GitHub-Delivery',
                   'X-GitHub-Event'):
