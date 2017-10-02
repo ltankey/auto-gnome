@@ -4,11 +4,7 @@ import json
 import requests
 import sys
 import yaml
-from util import (
-    gh_event_source_is_valid,
-    Config,
-    CallbackEvent
-)
+from util import (Config, CallbackEvent)
 from gh import EventSourceValidator
 
 # verbose logging
