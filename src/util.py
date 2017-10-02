@@ -12,6 +12,10 @@ import policies
 # FIXME: DEBUG should be comming from the environment!!!
 DEBUG=True
 
+GITHUB_SPECIAL_HEADERS = ('X-Hub-Signature',
+                          'X-GitHub-Delivery',
+                          'X-GitHub-Event')
+
 # FIXME: elaborate on list of forbidden policy names
 # "Policy" is the abstract base class defined in policies.__init__.py
 # We should probably prohibit all the __builtins__ and other python
@@ -22,39 +26,6 @@ FORBIDDEN_POLICY_NAMES = ("Policy",)
 
 
 # FIXME: use a cache (all over the place)
-'''
-def gh_event_source_is_valid(ip_str):
-    """
-    GitHub publishes the address ranges that they make callbacks from.
-
-    This function returns true if the IP address (string) passed to it
-    is within the whitelisted address range published by GitHub.
-    """
-    request_ip = ipaddress.ip_address(u'{0}'.format(ip_str))
-    # TODO: consider only doing this id DEBUG==True ???
-    if str(request_ip) == '127.0.0.1':
-        return True    
-    # TODO: cache the hook_blocks
-    hook_blocks = requests.get('https://api.github.com/meta').json()['hooks']
-    for block in hook_blocks:
-        if ipaddress.ip_address(request_ip) in ipaddress.ip_network(block):
-            return True
-    return False
-'''
-
-# FIXME: create method to validate the HMAC signature header
-"""
-GH is kind enough to sign the callback payloads, and put the HMAC sig
-in a header. It is signed with the secret configured in the web hook.
-
-It only makes sense for us to validate this signature if we tell our users
-to confgure the web hook with a signature we know. Since it wouldn't make
-sense to put a shared secret in the .gnome.yml, we should probably either
-ignore this, OR provide a sign-up process and a web site, wher we generate
-the secret and tell our users to put it in the GH callback config.
-
-Until then (do we need to bother?), we can ignore the HMAC sig.
-"""
 
 class InvalidPayloadJSONError(Exception): pass
 
@@ -78,6 +49,7 @@ class Config(object):
             return self._yaml
         # TODO: figure out what do we do about branches
         # FIXME: always use the appropriate branch
+        # maybe that should be the configured "default" branch
         branch="master"
         url_template = "https://raw.githubusercontent.com/{}/{}/.gnome.yml"
         repo_fullname = self.payload['repository']['full_name']
@@ -100,7 +72,8 @@ class Config(object):
             # FIXME: figure out what to do without valid config
             raise Exception("debug this please")
         
-        # FIXME: get_yaml should return parsed yaml (and be named differently)
+        # FIXME: maybe nicer if get_yaml returned parsed yaml
+        # rather than string (and be named differently)
         parsed_yml = yaml.load(self.get_yaml())
 
         for policy_name in parsed_yml['policies']:
@@ -117,8 +90,8 @@ class Config(object):
 
         if len(bad_news) > 0:
             # FIXME: do something smarter with bad news
-            # maybe a BadNewsProcessor?
-            # or just conventional logging
+            # maybe a BadNewsProcessor, that makes information
+            # available to the repo owner/subscriber.
             msg = "BAD NEWS: {}".format(bad_news)
             print(msg, file=sys.stdout)
 
@@ -155,22 +128,22 @@ class CallbackEvent(object):
             self._payload = payload
             return payload
         except json.JSONDecodeError:
-            # there is something wrong about doing this here,
-            # rather than in the validation method
             raise InvalidPayloadJSONError()
 
     def headers(self):
         headers = {}
-        for k in ('X-Hub-Signature',
-                  'X-GitHub-Delivery',
-                  'X-GitHub-Event'):
-            headers[k]=self.request.headers.get(k)
+        for k in GITHUB_SPECIAL_HEADERS:
+            try:
+                headers[k]=self.request.headers.get(k)
+            except:
+                pass
         return headers
 
-                                
-        
     def is_valid(self):
-        # FIXME: validate headers (esp the sig header, if...)
+        headers = self.headers()
+        for h in GITHUB_SPECIAL_HEADERS:
+            if h not in headers:
+                return False
         # FIXME: unit-test coverage for callback validation required
         try:
             p = self.payload()
