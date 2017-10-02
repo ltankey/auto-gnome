@@ -19,8 +19,8 @@ sys.path.append(
                 os.path.pardir)))
 
 # patchery
-import util
-util.requests.get = mock_get
+import gh
+gh.requests.get = mock_get
 
 
 # actual test code...
@@ -29,20 +29,22 @@ GOOD_MOCK_ADDRESSES = (
     '192.30.252.1', '192.30.252.254','192.30.252.13',
     '185.199.108.1', '185.199.108.254', '185.199.108.78')
 
-
 class IPValidationTestCase(unittest.TestCase):
     def test_localhost_is_valid(self):
-        validity = util.gh_event_source_is_valid('127.0.0.1')
+        val = gh.EventSourceValidator()
+        validity = val.ip_str_is_valid('127.0.0.1')
         self.assertTrue(validity)
 
     def test_good_addresses_are_valid(self):
+        val = gh.EventSourceValidator()
         for addr in GOOD_MOCK_ADDRESSES:
-            validity = util.gh_event_source_is_valid(addr)
+            validity = val.ip_str_is_valid(addr)
             self.assertTrue(validity)
 
     def test_bad_addresses_are_invalid(self):
+        val = gh.EventSourceValidator()
         for addr in BAD_MOCK_ADDRESSES:
-            validity = util.gh_event_source_is_valid(addr)
+            validity = val.ip_str_is_valid(addr)
             self.assertFalse(validity)
 
 

@@ -9,7 +9,7 @@ from util import (
     Config,
     CallbackEvent
 )
-
+from gh import EventSourceValidator
 
 # verbose logging
 # FIXME: DEBUG should be coming from the environment
@@ -25,9 +25,9 @@ def index():
         return "OK", 200
 
     elif request.method == 'POST':
-        # print(request.headers.get('X-GitHub-Event'), file=sys.stdout)
         # We only accept callbacks from GitHub or localhost
-        if not gh_event_source_is_valid(request.remote_addr):
+        validator = EventSourceValidator()
+        if not validator.ip_str_is_valid(request.remote_addr):
             abort(403)
 
         # FIXME: push any header stuff into CallbackEvent class

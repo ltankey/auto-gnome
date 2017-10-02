@@ -1,17 +1,77 @@
 import sys
+import os.path
 import json
+# FIXME: shouldn't have to mess with sys.path to import my stuff
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir)))
+from gh import (Milestone, Issue, Repo)
 from policies import Policy
 
+# TODO: this should optionally come from config in .gnome.yml
+SORTING_HAT_MILESTONE = "The Sorting Hat"
+
+
 class SortingHat(Policy):
+    """
+    The "Sorting Hat" is a milestone with no due-date, that signifies
+    some sort of ticket grooming/prioritisation process is necessary.
+
+    The sorting hat is like an in-tray for the person/people responsible
+    for assessing and prioritising tickets.
+
+    .. code:: gherkin
+
+       As a software developer
+       I want my auto-gnome to use a sorting hat policy
+       So that my tickets are continuously groomed and prioritised
+
+    """
     def dispatch_gnome(self):
-        print("sorting hat policy enabled", file=sys.stdout)
-        """
-        ensure the "sorting_hat" milestone exists
-        ensure the sorting_hat milestone has no due date
-        if the event was a new ticket:
-            if the new ticket has no milestone, put it in the sorting hat
-        if the event was a changed ticket:
-            if the changed ticket has no milestone, put it in the sorting hat
-        """
-        pl = self.callback.payload()
-        js = json.dumps(pl, sort_keys=True, indent=4) 
+        # we only care about issues and milestones
+        headers = self.callback.headers()
+        event = headers['X-GitHub-Event']
+        if event not in ('issue', 'milestone'):
+            return
+
+        payload = self.callback.payload()
+        action = payload['action']
+
+        if event == 'issue':
+            if action in ('created', 'demilestoned'):
+                # we only care about new issues
+                # or issues that lost their milestones
+
+                repo = repo_from_event(self.callback)
+                issue = repo.get_issue(payload[''])
+
+                if action == 'created':
+                    if not issue.has_milestone():
+                        repo.ensure_milestone_exists(SORTING_HAT_MILESTONE)
+                        repo.sensure_milestone_has_due_date(SORTING_HAT_MILESTONE, None)
+                        issue.move_to_milestone(SORTING_HAT_MILESTONE)
+                elif action == 'demilestoned':
+                    if issue.is_open():
+                        repo.ensure_milestone_exists(SORTING_HAT_MILESTONE)
+                        repo.sensure_milestone_has_due_date(SORTING_HAT_MILESTONE, None)
+                        issue.move_to_milestone(SORTING_HAT_MILESTONE)
+
+        elif event == 'milestone':
+            if action == 'closed':
+                # we only care about milestones as they close
+
+                repo = repo_from_event(self.callback)
+                milestone = repo.get_milestone(payload[''])
+
+                repo.ensure_milestone_exists(SORTING_HAT_MILESTONE)
+                repo.sensure_milestone_has_due_date(SORTING_HAT_MILESTONE, None)
+
+                for issue in milestone.get_open_tickets():
+                    issue.move_to_milestone(SORTING_HAT_MILESTONE)
+
+
+def repo_from_event(callback):
+    # TODO: figure out the Repo constructor paramaters
+    return Repo()
