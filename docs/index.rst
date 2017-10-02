@@ -5,6 +5,7 @@ Bugflow Auto Gnome
    :maxdepth: 2
    :caption: Contents:
 
+   intro
    use
    operations
    gnome_development
