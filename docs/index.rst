@@ -7,5 +7,6 @@ Bugflow Auto Gnome
 
    use
    operations
-   development
+   gnome_development
+   plugin_development
 
