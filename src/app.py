@@ -29,13 +29,6 @@ def index():
         validator = EventSourceValidator()
         if not validator.ip_str_is_valid(request.remote_addr):
             abort(403)
-
-        # FIXME: push any header stuff into CallbackEvent class
-        # FIXME: validate the sig header
-        event_header = request.headers.get('X-Hub-Signature')
-        # FIXME: write a good log message
-        event_guid = request.headers.get('X-GitHub-Delivery')
-        event_type = request.headers.get('X-GitHub-Event')
         
         cbe = CallbackEvent(request)
         if not cbe.is_valid():
@@ -44,6 +37,8 @@ def index():
             return msg, 400
 
         config = Config(cbe)
+        # TODO: maybe these should be asynchronous
+        # maybe even SNS etc...
         for activity in config.get_activities():
             activity.dispatch_gnome()
 

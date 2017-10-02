@@ -22,7 +22,7 @@ FORBIDDEN_POLICY_NAMES = ("Policy",)
 
 
 # FIXME: use a cache (all over the place)
-
+'''
 def gh_event_source_is_valid(ip_str):
     """
     GitHub publishes the address ranges that they make callbacks from.
@@ -40,7 +40,7 @@ def gh_event_source_is_valid(ip_str):
         if ipaddress.ip_address(request_ip) in ipaddress.ip_network(block):
             return True
     return False
-
+'''
 
 # FIXME: create method to validate the HMAC signature header
 """
@@ -159,7 +159,18 @@ class CallbackEvent(object):
             # rather than in the validation method
             raise InvalidPayloadJSONError()
 
+    def headers(self):
+        headers = []
+        for k in ('X-Hub-Signature',
+                  'X-GitHub-Delivery',
+                  'X-GitHub-Event'):
+            headers[k]=self.request.headers.get(k)
+        return headers
+
+                                
+        
     def is_valid(self):
+        # FIXME: validate headers (esp the sig header, if...)
         # FIXME: unit-test coverage for callback validation required
         try:
             p = self.payload()
