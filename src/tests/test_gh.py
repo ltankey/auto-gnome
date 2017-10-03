@@ -89,9 +89,7 @@ class RepoEnsureMilestoneExistsTestCase(unittest.TestCase):
         Then no new milestone is created
         """
         repo = gh.repo_from_callback(MockCallback())
-        # if the milestone exists
         repo.milestone_exists = MagicMock(return_value=True)
-        # it should not try to create it
         repo.create_milestone = MagicMock()
         repo.ensure_milestone_exists('foo')
         repo.create_milestone.assert_not_called()
@@ -103,9 +101,7 @@ class RepoEnsureMilestoneExistsTestCase(unittest.TestCase):
         Then a new milestone is created
         """
         repo = gh.repo_from_callback(MockCallback())
-        # if the milestone does not exist
         repo.milestone_exists = MagicMock(return_value=False)
-        # it should be created
         repo.create_milestone = MagicMock()
         repo.ensure_milestone_exists('foo')
         repo.create_milestone.assert_called()
@@ -120,16 +116,13 @@ class RepoEnsureMilestoneHasDueDateTestCase(unittest.TestCase):
         """
         DATE =  '2012-10-09T23:39:01Z'
         repo = gh.repo_from_callback(MockCallback())
-        # if the milestone exists
         repo.milestone_exists = MagicMock(return_value=True)
-        # and has no due date
         mm = gh.Milestone('some/repo', '_milestone')
         mm.get_due_date = MagicMock(return_value=None)
         mm.set_due_date = MagicMock()
         repo.get_milestone = MagicMock(return_value=mm)
-        # then ensure the date is set
+
         repo.ensure_milestone_has_due_date('foo', DATE)
-        # was the date updated right?
         mm.set_due_date.assert_called_with(DATE)
 
     def test_do_nothing_if_date_OK(self):
@@ -140,16 +133,13 @@ class RepoEnsureMilestoneHasDueDateTestCase(unittest.TestCase):
         """
         DATE =  '2012-10-09T23:39:01Z'
         repo = gh.repo_from_callback(MockCallback())
-        # if the milestone exists
         repo.milestone_exists = MagicMock(return_value=True)
-        # and has no due date
         mm = gh.Milestone('some/repo', '_milestone')
         mm.get_due_date = MagicMock(return_value=DATE)
         mm.set_due_date = MagicMock()
         repo.get_milestone = MagicMock(return_value=mm)
-        # then ensure the date is set
+
         repo.ensure_milestone_has_due_date('foo', DATE)
-        # was the date updated right?
         mm.set_due_date.assert_not_called()
 
     def test_update_if_wrong_date(self):
@@ -162,17 +152,43 @@ class RepoEnsureMilestoneHasDueDateTestCase(unittest.TestCase):
         DATE =  '2012-10-09T23:39:01Z'
         WRONG_DATE = '2030-10-09T23:39:01Z'
         repo = gh.repo_from_callback(MockCallback())
-        # if the milestone exists
         repo.milestone_exists = MagicMock(return_value=True)
-        # and has no due date
         mm = gh.Milestone('some/repo', '_milestone')
         mm.get_due_date = MagicMock(return_value=WRONG_DATE)
         mm.set_due_date = MagicMock()
         repo.get_milestone = MagicMock(return_value=mm)
-        # then ensure the date is set
+
         repo.ensure_milestone_has_due_date('foo', DATE)
-        # was the date updated right?
         mm.set_due_date.assert_called_with(DATE)
+
+
+# TODO: FIXME: move next to classes into mocks.py
+class MockMilestoneFoo:
+    """
+    Dummy pygithub.Milestone.Milestone thing for testing.
+
+    Always titled "foo", exists to support the
+    MockFooMilestoneWrapper. 
+    """
+    EXPECTED_TICKETS = ('A', 'B', 'C')
+
+    def __init__(self):
+        self.title = 'foo'
+        
+
+class MockFooMilestoneWrapper:
+    """
+    Dummy gh.Milestone for testing. Has a private _milestone
+    attribute that is a MockMilestoneFoo.
+
+    Exists to be monkeypatched into a gh.Repo to block
+    some extranious calls to GitHub during testing.
+    """
+    def __init__(self):
+        self._milestone = MockMilestoneFoo()
+        self.repo = gh.repo_from_callback(MockCallback())
+        self.repo._repo.get_issues = MagicMock(
+            return_val=self._milestone.EXPECTED_TICKETS)
 
 
 class RepoMilestoneExistsTestCase(unittest.TestCase):
@@ -182,18 +198,9 @@ class RepoMilestoneExistsTestCase(unittest.TestCase):
         When I call repo.milestone_exists
         Then True is returned
         """
-        # givem a milestone exists
-        MILESTONE_NAME = "foo"
         repo = gh.repo_from_callback(MockCallback())
-        class MockMilestoneWrapper:
-            def __init__(self):
-                self._milestone = MockMilestone()
-        class MockMilestone:
-            def __init__(self):
-                self.title = MILESTONE_NAME
-        repo._milestones = (MockMilestoneWrapper(),)
-        # then milestone exists
-        self.assertTrue(repo.milestone_exists(MILESTONE_NAME))
+        repo._milestones = (MockFooMilestoneWrapper(),)
+        self.assertTrue(repo.milestone_exists('foo'))
 
 
     def test_false_if_milestone_not_exists(self):
@@ -202,64 +209,184 @@ class RepoMilestoneExistsTestCase(unittest.TestCase):
         When I call repo.milestone_exists
         Then False is returned
         """
-        # givem a milestone exists
-        MILESTONE_NAME = "foo"
-        OTHER_MILESTONE_NAME = "bar"
         repo = gh.repo_from_callback(MockCallback())
-        class MockMilestoneWrapper:
-            def __init__(self):
-                self._milestone = MockMilestone()
-        class MockMilestone:
-            def __init__(self):
-                # this is not the milestone you are looking for
-                self.title = OTHER_MILESTONE_NAME
-        repo._milestones = (MockMilestoneWrapper(),)
-        # then the milestone does not exist
-        self.assertFalse(repo.milestone_exists(MILESTONE_NAME))
+        repo._milestones = (MockFooMilestoneWrapper(),)
+        self.assertFalse(repo.milestone_exists('bar'))
 
 
 class RepoGetMilestoneTestCase(unittest.TestCase):
-    def test_returns_non_if_not_exists(self):
-        pass  # FIXME
+    def test_returns_none_if_not_exists(self):
+        """
+        Given a milestone does not exist
+        When I call repo.get_milestone on it's name
+        Then None is returned
+        """
+        repo = gh.repo_from_callback(MockCallback())
+        repo._milestones = (MockFooMilestoneWrapper(),)
+        found = repo.get_milestone('bar')  # not 'foo'
+        self.assertFalse(found)
+
     def test_returns_milestone_if_exists(self):
-        pass  # FIXME
+        """
+        Given a milestone exists,
+        when I call repo.get_milestone on it's name
+        then not None is returned
+        """
+        repo = gh.repo_from_callback(MockCallback())
+        repo._milestones = (MockFooMilestoneWrapper(),)
+        found = repo.get_milestone('foo')
+        self.assertTrue(found)
 
 
 class RepoCreateMilestoneTestCase(unittest.TestCase):
-    def test_creates_if_not_exist(self):
-        pass  # FIXME
-    def test_error_if_already_exists(self):
-        pass  # FIXME
-    def test_date_none_if_none_provided(self):
-        pass  # FIXME
-    def test_date_matches_supplied(self):
-        pass  # FIXME
+    def test_heisenmockbug_weirdness(self):
+        """
+        Don't ask.
+        """
+        repo = gh.repo_from_callback(MockCallback())
+        repo._milestones = (MockFooMilestoneWrapper(),)
+        # 'foo' != 'bar'
+        self.assertFalse(repo.get_milestone('bar'))
+
+    def test_create_with_defaults_if_not_exist(self):
+        """
+        Given a milestone does not exist
+        When I call repo.create_milestone
+        Then the milestone is created
+        """
+        repo = gh.repo_from_callback(MockCallback())
+        repo._milestones = (MockFooMilestoneWrapper(),)
+        create_milestone_mock = MagicMock()
+        repo._repo.create_milestone = create_milestone_mock
+        repo.create_milestone('bar')
+        create_milestone_mock.assert_called()
+
+    def test_do_nothing_if_already_exists(self):
+        """
+        Given a milestone,
+        when I call repo.create_milestone;
+        idempotency.
+        """
+        # I call that Haiku "then nothing happens"
+        
+        repo = gh.repo_from_callback(MockCallback())
+        repo._milestones = (MockFooMilestoneWrapper(),)
+        create_milestone_mock = MagicMock()
+        repo._repo.create_milestone = create_milestone_mock
+        repo.milestone_exists = MagicMock(return_value=True)
+        repo.create_milestone('foo')
+        repo._repo.create_milestone.assert_not_called()
 
 
 class MilestoneInitTestCase(unittest.TestCase):
     def test_repo_validation(self):
-        pass  # FIXME
-    def test_milestone_validation(self):
-        pass  # FIXME
+        """
+        Given I have a valid callback payload
+        When I initiate a Milestone
+        Then no errors are raised
+        """
+        repo = gh.repo_from_callback(MockCallback())
+        repo._repo.create_milestone = MagicMock()
+        gh_milestone = MockMilestoneFoo()
+        try:
+            mlstn = gh.Milestone(repo, gh_milestone)
+            was_error = False
+        except:
+            was_error = True
+        self.assertFalse(was_error)
 
 
 class MilestoneOpenTicketsTestCase(unittest.TestCase):
+
     def test_all_open_tickets_returned(self):
-        pass  # FIXME
+        repo = gh.repo_from_callback(MockCallback())
+        ghm = MockMilestoneFoo()
+        m = gh.Milestone(repo, ghm)
+        m.repo._repo.get_issues = MagicMock(
+            return_value=MockMilestoneFoo.EXPECTED_TICKETS)
+        found = []
+        for t in m.open_tickets():
+            found.append(t._issue)
+        expected = MockMilestoneFoo.EXPECTED_TICKETS
+
+        for t in expected:
+            self.assertTrue(t in found)
+
     def test_no_extranious_tickets_returned(self):
-        pass  # FIXME
+        repo = gh.repo_from_callback(MockCallback())
+        ghm = MockMilestoneFoo()
+        m = gh.Milestone(repo, ghm)
+        m.repo._repo.get_issues = MagicMock(
+            return_value=MockMilestoneFoo.EXPECTED_TICKETS)
+        found = []
+        for t in m.open_tickets():
+            found.append(t._issue)
+        expected = MockMilestoneFoo.EXPECTED_TICKETS
+
+        for t in found:
+            self.assertTrue(t in expected)
 
 
 class IssueInitTestCase(unittest.TestCase):
-    pass
+    def test_init(self):
+        """
+        Given I have a valid callback
+        When I initiate an Issue
+        Then no errors are raised
+        """
+        repo = gh.repo_from_callback(MockCallback())
+        gh_issue = MagicMock()
+        try:
+            i = gh.Issue(repo, gh_issue)
+            was_error = False
+        except:
+            was_error = True
+        self.assertFalse(was_error)
 
 
 class IssueHasMilestoneTestCase(unittest.TestCase):
-    pass
+    def test_false_if_no_milestone(self):
+        repo = gh.repo_from_callback(MockCallback())
+        gh_issue = MagicMock()
+        gh_issue.milestone = False
+        i = gh.Issue(repo, gh_issue)
+        self.assertFalse(i.has_milestone())
+
+    def test_true_if_has_milestone(self):
+        repo = gh.repo_from_callback(MockCallback())
+        gh_issue = MagicMock()
+        gh_issue.milestone = MagicMock()
+        i = gh.Issue(repo, gh_issue)
+        self.assertTrue(i.has_milestone())
 
 
 class IssueMoveToMilestoneTestCase(unittest.TestCase):
-    pass
-    
+    def test_milestone_not_exists_then_created(self):
+        repo = gh.repo_from_callback(MockCallback())
+        gh_issue = MagicMock()
+        #gh_issue.milestone = False
+        repo.milestone_exists = MagicMock(return_value=False)
+        repo.create_milestone = MagicMock()
+        repo.get_milestone = MagicMock()
+
+        i = gh.Issue(repo, gh_issue)
+        i.move_to_milestone('x')
+
+        repo.create_milestone.assert_called()
+
+    def test_repo_exists_then_not_created(self):
+        repo = gh.repo_from_callback(MockCallback())
+        gh_issue = MagicMock()
+        #gh_issue.milestone = False
+        repo.milestone_exists = MagicMock(return_value=True)
+        repo.create_milestone = MagicMock()
+        repo.get_milestone = MagicMock()
+
+        i = gh.Issue(repo, gh_issue)
+        i.move_to_milestone('x')
+
+        repo.create_milestone.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

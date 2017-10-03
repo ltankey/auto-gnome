@@ -22,11 +22,25 @@ class Milestone:
     def __init__(self, repo, milestone):
         # FIXME: ensure repo is instance of Repo, and milestone
         # is instance of pygithub.Milestone.Milestone
-        self._repo = repo
+        self.repo = repo
         self._milestone = milestone
 
+    def get_date(self):
+        # return the due date of the milestone
+        return self._milestone['due_on']
+
+    def get_description(self):
+        return self._milestone['description']
+
+    def get_name(self):
+        return self._milestone['title']
+
     def open_tickets(self):
-        return ()
+        found = []
+        for i in self.repo._repo.get_issues(
+                milestone=self._milestone):
+            found.append(Issue(self.repo, i))
+        return found
 
     
 class Issue:
@@ -34,10 +48,21 @@ class Issue:
     Wrapper of pygithub.Issue.Issue, with cache and convenience
     methods.
     """
+    def __init__(self, repo, gh_issue):
+        self.repo = repo
+        self._issue = gh_issue
+
     def has_milestone(self):
-        return True
+        milestone = self._issue.milestone
+        if milestone:
+            return True
+        return False
+
     def move_to_milestone(self, new_milestone):
-        pass
+        if not self.repo.milestone_exists(new_milestone):
+            self.repo.create_milestone(new_milestone)
+        m = self.repo.get_milestone(new_milestone)
+        self._issue.milestone = m._milestone
 
 
 class Repo:
@@ -112,7 +137,7 @@ class Repo:
                     return m
         return None
 
-    def create_milestone(self, milestone_name, description=None, date=None):
+    def create_milestone(self, milestone_name, description=None, due_on=None):
         """
         If the milestone does not exist, create it.
 
@@ -121,17 +146,44 @@ class Repo:
 
         Returns the created (or pre-existing) Milestone instance.
         """
-        # FIXME: validate date input (if not None)
-        # accept strings of dates?
+        # cast strings to unicode
+        description = u"{}".format(milestone_name)
+        milestone_name = u"{}".format(milestone_name)
+
+        #always
+        STATE = u"open"
+
         if self.milestone_exists(milestone_name):
             # FIXME: should we raise an error here, or just log?
             # FIXME: what to do if dates differ, upsert?
             return self.get_milestone(milestone_name)
-        self._repo.create_milestone(
-            milestone_name,
-            state='open',
-            description=description,
-            due_on=date)
+        # cast None description to empty strings
+        if not description:
+            description = u''
+        # accept due_on as string or datetime.date
+        if due_on:
+            import datetime  # when working, move to head
+            if type(due_on) == type(str("")):
+                #try:
+                due_on = datetime.date.fromtimestamp(due_on)
+                raise Exception(due_on)  # DEBUG
+                #except:
+                #    # FIXME: what to do if due_on can not be recast?
+                #    pass  # probably not that, custom exception?
+            elif type(due_on) == type(datetime.date(2017, 10, 10)):
+                pass
+
+            self._repo.create_milestone(
+                milestone_name,
+                state=STATE,
+                description=description,
+                due_on=due_on)
+        else:
+            self._repo.create_milestone(
+                milestone_name,
+                state=STATE,
+                description=description)
+
         return self.get_milestone(milestone_name)
 
 
