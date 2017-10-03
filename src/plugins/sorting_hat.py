@@ -45,31 +45,42 @@ class SortingHat(Policy):
                 # or issues that lost their milestones
 
                 repo = repo_from_event(self.callback)
-                issue = repo.get_issue(payload[''])
+                gh_issue = repo.get_issue(payload['issue'])
+                issue = gh.Issue(repo, gh_issue)
 
                 if action == 'created':
                     if not issue.has_milestone():
-                        repo.ensure_milestone_exists(SORTING_HAT_MILESTONE)
-                        repo.sensure_milestone_has_due_date(SORTING_HAT_MILESTONE, None)
-                        issue.move_to_milestone(SORTING_HAT_MILESTONE)
+                        repo.ensure_milestone_exists(
+                            SORTING_HAT_MILESTONE)
+                        repo.ensure_milestone_has_due_date(
+                            SORTING_HAT_MILESTONE, None)
+                        issue.move_to_milestone(
+                            SORTING_HAT_MILESTONE)
                 elif action == 'demilestoned':
                     if issue.is_open():
-                        repo.ensure_milestone_exists(SORTING_HAT_MILESTONE)
-                        repo.sensure_milestone_has_due_date(SORTING_HAT_MILESTONE, None)
-                        issue.move_to_milestone(SORTING_HAT_MILESTONE)
+                        repo.ensure_milestone_exists(
+                            SORTING_HAT_MILESTONE)
+                        repo.sensure_milestone_has_due_date(
+                            SORTING_HAT_MILESTONE, None)
+                        issue.move_to_milestone(
+                            SORTING_HAT_MILESTONE)
 
         elif event == 'milestone':
             if action == 'closed':
                 # we only care about milestones as they close
 
                 repo = repo_from_event(self.callback)
-                milestone = repo.get_milestone(payload[''])
+                gh_milestone = repo.get_milestone(payload[''])
+                milestone = gh.Milestone(repo, gh_milestone)
 
-                repo.ensure_milestone_exists(SORTING_HAT_MILESTONE)
-                repo.sensure_milestone_has_due_date(SORTING_HAT_MILESTONE, None)
+                repo.ensure_milestone_exists(
+                    SORTING_HAT_MILESTONE)
+                repo.sensure_milestone_has_due_date(
+                    SORTING_HAT_MILESTONE, None)
 
                 for issue in milestone.get_open_tickets():
-                    issue.move_to_milestone(SORTING_HAT_MILESTONE)
+                    issue.move_to_milestone(
+                        SORTING_HAT_MILESTONE)
 
 
 def repo_from_event(callback):
