@@ -34,7 +34,7 @@ class Config(object):
     """
     Config is generated from the .gnome.yml file that is found in the root
     of a repository that is a source of GitHub callback events.
-    
+
     The .gnome.yml file is retrieved, parsed and validated. Then, the
     get_activities() method can be used to instantiate policy objects for
     everything that was configured in the repo.
@@ -71,22 +71,19 @@ class Config(object):
         if not self.yaml_is_valid():
             # FIXME: figure out what to do without valid config
             raise Exception("debug this please")
-        
+
         # FIXME: maybe nicer if get_yaml returned parsed yaml
         # rather than string (and be named differently)
         parsed_yml = yaml.load(self.get_yaml())
 
         for policy_name in parsed_yml['policies']:
             if policy_name in FORBIDDEN_POLICY_NAMES:
-                bad_news.append((policy_name, "forbidden"))  
+                bad_news.append((policy_name, "forbidden"))
             elif policy_name not in dir(policies):
                 bad_news.append((policy_name, "not found"))
             else:
-                # TODO: auto-flagilate for use of eval, for shame!
-                policy_class = eval('policies.{}'.format(policy_name))
-                # FIXME: detect and respond to invalid policy classes
-                # (policy classes must have a dispatch_gnome method)
-                activities.append(policy_class(self.callback))
+                policy_class = policies.MANIFEST.get(policy_name, None)
+                activities.append(policy_class(self, self.callback))
 
         if len(bad_news) > 0:
             # FIXME: do something smarter with bad news
