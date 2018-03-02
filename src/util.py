@@ -40,17 +40,19 @@ class Config(object):
     get_activities() method can be used to instantiate policy objects for
     everything that was configured in the repo.
     """
-    def __init__(self, callback):
+    def __init__(self, repo_name=None, callback=None):
         self.callback = callback
-        self.payload= callback.payload()
-        self._yaml=None
+        if repo_name:
+            self.repo_name = repo_name
+        else:
+            self.repo_name = callback.payload()['repository']['full_name']
+        self._yaml = None
 
     def get_yaml(self):
         if self._yaml:
             return self._yaml
 
-        repo_fullname = self.payload['repository']['full_name']
-        self._yaml =  Repo(repo_fullname).get_config()
+        self._yaml =  Repo(self.repo_name).get_config()
         return self._yaml
 
 

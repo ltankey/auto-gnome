@@ -2,6 +2,7 @@ import requests
 import ipaddress
 import yaml
 import base64
+import json
 from github import Github
 
 import config
@@ -14,6 +15,72 @@ gh = Github(GITHUB_USER, GITHUB_PSX)
 def repo_from_callback(callback):
     full_name = callback.payload()['repository']['full_name']
     return Repo(full_name)
+
+class ProjectsMixin:
+    ACCEPT_HEADER = 'application/vnd.github.inertia-preview+json'
+    @property
+    def projects(self):
+        if not self._projects:
+            r = requests.get(
+                f'https://api.github.com/{self.api_path}/projects',
+                auth=(GITHUB_USER, GITHUB_PSX),
+                headers={'Accept': ProjectsMixin.ACCEPT_HEADER}
+            )
+
+            if r.status_code == 200:
+                self._projects = [Project(p) for p in r.json()]
+            else:
+                raise Exception(f"Couldn't access project board list for  {self.name}")
+        return self._projects
+
+    def create_project(self, name, body):
+        r = requests.post(
+            f'https://api.github.com/{self.api_path}/projects',
+            auth=(GITHUB_USER, GITHUB_PSX),
+            headers={'Accept': ProjectsMixin.ACCEPT_HEADER},
+            data=json.dumps({'name': name, 'body': body})
+        )
+
+        if r.status_code == 201:
+            return Project(json.loads(r.text))
+        raise Exception(f"Couldn't create a project! {r}")
+
+
+class Organization(ProjectsMixin):
+    def __init__(self, name):
+        self.name = name
+        self._projects = []
+        self.api_path = f'orgs/{name}'
+
+    # @property
+    # def projects(self):
+    #     if not self._projects:
+    #         accept_header = 'application/vnd.github.inertia-preview+json'
+    #         url_path = '/'.join(['orgs', self.name, 'projects'])
+
+    #         r = requests.get(
+    #             f'https://api.github.com/{url_path}',
+    #             auth=(GITHUB_USER, GITHUB_PSX),
+    #             headers={'Accept': accept_header}
+    #         )
+
+    #         if r.status_code == 200:
+    #             self._projects = r.json()
+    #         else:
+    #             raise Exception(f"Couldn't access project board list for  {self.name}")
+    #     return self._projects
+
+class Project:
+    def __init__(self, data):
+        self._data = data
+        self.columns = []
+        self.name = data['name']
+        self.state = data['state']
+
+    # @property
+    # def columns(self):
+    #     if not self.columns:
+
 
 
 class Milestone:
@@ -47,13 +114,15 @@ class Milestone:
         return self._milestone.number
 
     def open_tickets(self):
-        found = []
-        for i in self.repo._repo.get_issues(
-                milestone=self._milestone):
-            found.append(Issue(self.repo, i))
-        return found
+        # TODO: might be nice to rename this to open_issues for consistency
+        repo_tickets = self.repo._repo.get_issues(
+                milestone=self._milestone)
+        return [Issue(self.repo, i) for i in repo_tickets]
 
     def update(self, **kwargs):
+        """ Proxy method for underlying _milestone """
+
+        # TODO: can probably replace this if we inherit from github.Milestone
         self._milestone.edit(self.title, **kwargs)
 
 
@@ -79,7 +148,7 @@ class Issue:
         self._issue.milestone = m._milestone
 
 
-class Repo:
+class Repo(ProjectsMixin):
     """
     This class is an abstraction over the GitHub repository.
 
@@ -93,16 +162,46 @@ class Repo:
         self.name = repo_name
         self._repo = gh.get_repo(repo_name)
         self._milestones = None # lazy
+        self.api_path = f'repos/{repo_name}'
 
-    def update_milestones(self):
+    def fetch_milestones(self):
+        """ Refresh the milestone list from the Github API """
         self._milestones = {
             x.title: Milestone(self._repo, x) for x in self._repo.get_milestones(state='all')
         }
 
+    def get_last_active_milestone(self, prefix=''):
+        """ Return the milestone with the most recent due_on value """
+        milestones = sorted(
+            [x for x in self.milestones if x.due_on and x.title.startswith(prefix)],
+            key=lambda x: x.due_on
+        )
+
+        expired_milestones = [
+            x for x in milestones if datetime.date(x) < datetime.date(datetime.today())
+        ]
+        return expired_milestones[:-1] if expired_milestones else None
+
+    def get_active_milestone(self, prefix=''):
+        """ Return the milestone with a future due_on value closest to today """
+        milestones = sorted(
+            [x for x in self.milestones if x.due_on and x.title.startswith(prefix)],
+            key=lambda x: x.due_on
+        )
+
+        unexpired_milestones = [
+            x for x in milestones if datetime.date(x) > datetime.date(datetime.today())
+        ]
+        return unexpired_milestones[0] if unexpired_milestones else None
+
+    @property
+    def organization_name(self):
+        return self._repo.organization.login
+
     @property
     def milestones(self):
         if not self._milestones:
-            self.update_milestones()
+            self.fetch_milestones()
         return self._milestones
 
     def upsert_milestone(self, title, **kwargs):
@@ -161,7 +260,7 @@ class Repo:
         Returns the milestone with by name (or None)
         """
         if not cache:
-            self.update_milestones()
+            self.fetch_milestones()
 
         return self.milestones.get(milestone_name, None)
 

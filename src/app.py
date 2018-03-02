@@ -32,7 +32,10 @@ def index():
             print (msg, file=sys.stdout)
             return msg, 400
 
-        config = Config(cbe)
+        # FIXME: we should probably instantiated a repo here, using
+        # cbe['repository']['full_name'] as the key, and then accessing
+        # the list of activities via repo.config.get_activities()
+        config = Config(callback=cbe)
         # TODO: maybe these should be asynchronous
         # maybe even SNS etc...
         for activity in config.get_activities():
