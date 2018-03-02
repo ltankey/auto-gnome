@@ -5,6 +5,7 @@ import os
 import requests
 import ipaddress
 from github import Github
+from gh import Repo
 
 import policies
 
@@ -47,19 +48,11 @@ class Config(object):
     def get_yaml(self):
         if self._yaml:
             return self._yaml
-        # TODO: figure out what do we do about branches
-        # FIXME: always use the appropriate branch
-        # maybe that should be the configured "default" branch
-        branch="master"
-        url_template = "https://raw.githubusercontent.com/{}/{}/.gnome.yml"
+
         repo_fullname = self.payload['repository']['full_name']
-        url = url_template.format(repo_fullname, branch)
-        raw_yml = requests.get(url).text
-        # FIXME: handle non-200 codes
-        # TODO: decide if we should be iterating over 404s/config file names
-        # FIXME: validate the yaml
-        self._yaml = raw_yml
-        return raw_yml
+        self._yaml =  Repo(repo_fullname).get_config()
+        return self._yaml
+
 
     def get_activities(self):
         """
@@ -74,12 +67,12 @@ class Config(object):
 
         # FIXME: maybe nicer if get_yaml returned parsed yaml
         # rather than string (and be named differently)
-        parsed_yml = yaml.load(self.get_yaml())
+        parsed_yml = self.get_yaml()
 
         for policy_name in parsed_yml['policies']:
             if policy_name in FORBIDDEN_POLICY_NAMES:
                 bad_news.append((policy_name, "forbidden"))
-            elif policy_name not in dir(policies):
+            elif policy_name not in policies.MANIFEST.keys():
                 bad_news.append((policy_name, "not found"))
             else:
                 policy_class = policies.MANIFEST.get(policy_name, None)
@@ -95,8 +88,7 @@ class Config(object):
         return activities
 
     def yaml_is_valid(self):
-        raw_yml = self.get_yaml()
-        parsed_yml =yaml.load(raw_yml)
+        parsed_yml = self.get_yaml()
         if 'policies' not in parsed_yml:
             if DEBUG:
                 msg = "policies not in parsed yaml"

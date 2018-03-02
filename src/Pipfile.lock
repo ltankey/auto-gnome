@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "bb35ab22baaa85db9820ed376e78dab86223685353ef2021d6536c9c1f2cd383"
+            "sha256": "f949d109f51d0d75f07856d6c144aaa4488b63367f82d181c2a27f8a764cd284"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -57,17 +57,17 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:f244c9f3a9e0a6492dd58eb2ef8dd7e305f744f9f9ca7b83ba4e9165d2d5ad38",
-                "sha256:de924f18c50a496df7298ed462a2673613b384351599624b33175207722dc5bb"
+                "sha256:1576a72dd1a6435b29b41d541411fcabcef2777de9abebc50d01046ca24447f9",
+                "sha256:0537aa3c840b2a6c9cdc53704b1ca27c19f1850e16056db1f6241917a5eee648"
             ],
-            "version": "==1.6.1"
+            "version": "==1.6.2"
         },
         "botocore": {
             "hashes": [
-                "sha256:7778128a12f886fc5e86ea5e9ff81cd55aa5b33272e8da08e530b67d39a9acc6",
-                "sha256:2a673d9289fc5d14b45fa904673d8f6d226ebfc238c0f354ac8d4e8955329152"
+                "sha256:eda173b250d68b58d9de9f049fd519a3bd68cfdc79a390c5965b986e0eb7346f",
+                "sha256:4957da363f0a903767257b7ecc74396225fc2e736ba663c2f465ca9795a5785a"
             ],
-            "version": "==1.9.1"
+            "version": "==1.9.2"
         },
         "certifi": {
             "hashes": [
@@ -109,6 +109,12 @@
                 "sha256:5ef9416b527b50d722f34655becfb75e49228eb82f87b855ed1911b3314b5408"
             ],
             "version": "==0.5"
+        },
+        "envparse": {
+            "hashes": [
+                "sha256:4f3b9a27bb55d27f124eb4adf006fec05e4588891c9a054a183a112645056eb7"
+            ],
+            "version": "==0.2.0"
         },
         "flask": {
             "hashes": [
@@ -282,6 +288,13 @@
                 "sha256:891c38b2a02f5bb1be3e4793866c8df49c7d19baabf9c1bad62547e0b4866aca"
             ],
             "version": "==2.6.1"
+        },
+        "python-dotenv": {
+            "hashes": [
+                "sha256:dc7940052cfe170e881aea40feb4ea7776e6a97170ed038fd2ee7e26e47585f2",
+                "sha256:45e927c34204c90f5faa35ea8709b894f6b1a7712d77eb50940601068040993b"
+            ],
+            "version": "==0.7.1"
         },
         "python-slugify": {
             "hashes": [

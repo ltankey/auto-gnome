@@ -29,8 +29,9 @@ from plugins.verbose_callback_logging import VerboseCallbackLogging
 from plugins.sorting_hat import SortingHat
 from plugins.propagate_milestones import PropagateMilestones
 
+# TODO: make a decision about case for config
 MANIFEST = {
     'SortingHat': SortingHat,
     'VerboseCallbackLogging': VerboseCallbackLogging,
-    'PropagateMilestones': PropagateMilestones
+    'propagate_milestones': PropagateMilestones
 }

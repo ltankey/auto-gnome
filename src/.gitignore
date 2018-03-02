@@ -2,3 +2,4 @@ zappa_settings.json
 .cache/
 local_secrets.py
 .vscode
+.env
