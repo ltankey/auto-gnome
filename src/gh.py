@@ -1,12 +1,15 @@
 import requests
 import ipaddress
+import yaml
+import base64
 from github import Github
 
+import config
 
-# TODO: this should definitely be coming from the environment
-import local_secrets
-GITHUB_USER = local_secrets.GITHUB_USER
-GITHUB_PSX = local_secrets.GITHUB_PSX
+GITHUB_USER = config.GITHUB_USER
+GITHUB_PSX = config.GITHUB_PSX
+
+gh = Github(GITHUB_USER, GITHUB_PSX)
 
 def repo_from_callback(callback):
     full_name = callback.payload()['repository']['full_name']
@@ -16,24 +19,32 @@ def repo_from_callback(callback):
 class Milestone:
     """
     Wrapper of pygithub.Milestone.Milestone with cache and
-    convenience methods. Bound to a Repo instance for 
-    access to the Github connection (credentials etc). 
+    convenience methods. Bound to a Repo instance for
+    access to the Github connection (credentials etc).
     """
     def __init__(self, repo, milestone):
         # FIXME: ensure repo is instance of Repo, and milestone
         # is instance of pygithub.Milestone.Milestone
+        # Could eventually inherit it?
         self.repo = repo
         self._milestone = milestone
 
-    def get_date(self):
+    @property
+    def due_on(self):
         # return the due date of the milestone
-        return self._milestone['due_on']
+        return self._milestone.due_on
 
-    def get_description(self):
-        return self._milestone['description']
+    @property
+    def description(self):
+        return self._milestone.description
 
-    def get_name(self):
-        return self._milestone['title']
+    @property
+    def title(self):
+        return self._milestone.title
+
+    @property
+    def number(self):
+        return self._milestone.number
 
     def open_tickets(self):
         found = []
@@ -42,7 +53,10 @@ class Milestone:
             found.append(Issue(self.repo, i))
         return found
 
-    
+    def update(self, **kwargs):
+        self._milestone.edit(self.title, **kwargs)
+
+
 class Issue:
     """
     Wrapper of pygithub.Issue.Issue, with cache and convenience
@@ -77,9 +91,33 @@ class Repo:
     """
     def __init__(self, repo_name):
         self.name = repo_name
-        gh = Github(GITHUB_USER, GITHUB_PSX)
         self._repo = gh.get_repo(repo_name)
         self._milestones = None # lazy
+
+    def update_milestones(self):
+        self._milestones = {
+            x.title: Milestone(self._repo, x) for x in self._repo.get_milestones(state='all')
+        }
+
+    @property
+    def milestones(self):
+        if not self._milestones:
+            self.update_milestones()
+        return self._milestones
+
+    def upsert_milestone(self, title, **kwargs):
+        milestone = self.milestones.get(title, None)
+
+        if milestone:
+            milestone.update(**kwargs)
+        else:
+            self.create_milestone(title, **kwargs)
+
+    def get_config(self):
+        conf_file = self._repo.get_contents('.bugflow/.gnome.yml')
+        if conf_file:
+            return yaml.load(base64.b64decode(conf_file.content))
+
 
     def ensure_milestone_exists(self, milestone_name,
                                 description=None, date=None):
@@ -115,29 +153,20 @@ class Repo:
         """
         Returns True if the milestone exists.
         """
-        if not self._milestones:
-            self._milestones = []
-            for _milestone in self._repo.get_milestones(state="all"):
-                m = Milestone(self._repo, _milestone)
-                self._milestones.append(m)
-        found = False
-        for m in self._milestones:
-            if m._milestone.title == milestone_name:
-                found = True
-        return found
+        return milestone_name in self.milestones
 
-    def get_milestone(self, milestone_name):
-        """
-        Returns the milestone with the name (or None)
-        """
-        # force lazy evaluation
-        if self.milestone_exists(milestone_name):
-            for m in self._milestones:
-                if m._milestone.title == milestone_name:
-                    return m
-        return None
 
-    def create_milestone(self, milestone_name, description=None, due_on=None):
+    def get_milestone(self, milestone_name, cache=True):
+        """
+        Returns the milestone with by name (or None)
+        """
+        if not cache:
+            self.update_milestones()
+
+        return self.milestones.get(milestone_name, None)
+
+
+    def create_milestone(self, milestone_name, state='open', description=None, due_on=None):
         """
         If the milestone does not exist, create it.
 
@@ -147,19 +176,14 @@ class Repo:
         Returns the created (or pre-existing) Milestone instance.
         """
         # cast strings to unicode
-        description = u"{}".format(milestone_name)
+        description = f'{description or ""}'
         milestone_name = u"{}".format(milestone_name)
-
-        #always
-        STATE = u"open"
 
         if self.milestone_exists(milestone_name):
             # FIXME: should we raise an error here, or just log?
             # FIXME: what to do if dates differ, upsert?
             return self.get_milestone(milestone_name)
-        # cast None description to empty strings
-        if not description:
-            description = u''
+
         # accept due_on as string or datetime.date
         if due_on:
             import datetime  # when working, move to head
@@ -170,27 +194,25 @@ class Repo:
                 #except:
                 #    # FIXME: what to do if due_on can not be recast?
                 #    pass  # probably not that, custom exception?
-            elif type(due_on) == type(datetime.date(2017, 10, 10)):
-                pass
 
             self._repo.create_milestone(
                 milestone_name,
-                state=STATE,
+                state=state,
                 description=description,
                 due_on=due_on)
         else:
             self._repo.create_milestone(
                 milestone_name,
-                state=STATE,
+                state=state,
                 description=description)
 
-        return self.get_milestone(milestone_name)
+        return self.get_milestone(milestone_name, cache=False)
 
 
 class EventSourceValidator:
     """
     GitHub publishes the address ranges that they make callbacks from.
-        
+
     Instances of this class can be used to validate ip addresses,
     like a kind of dymanic whitelist.
     """
@@ -217,8 +239,8 @@ class EventSourceValidator:
         """
         request_ip = ipaddress.ip_address(u'{0}'.format(ip_str))
         if str(request_ip) == '127.0.0.1':
-            return True    
-    
+            return True
+
         for block in self.get_hook_blocks():
             if ipaddress.ip_address(request_ip) in ipaddress.ip_network(block):
                 return True

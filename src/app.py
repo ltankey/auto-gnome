@@ -4,12 +4,12 @@ import json
 import requests
 import sys
 import yaml
+import config
 from util import (Config, CallbackEvent)
 from gh import EventSourceValidator
 
 # verbose logging
-# FIXME: DEBUG should be coming from the environment
-DEBUG=True
+DEBUG = config.DEBUG
 
 app = Flask(__name__)
 
@@ -25,7 +25,7 @@ def index():
         validator = EventSourceValidator()
         if not validator.ip_str_is_valid(request.remote_addr):
             abort(403)
-        
+
         cbe = CallbackEvent(request)
         if not cbe.is_valid():
             msg = "callback payload does not appear valid"
