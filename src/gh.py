@@ -4,6 +4,7 @@ import yaml
 import base64
 import json
 from github import Github
+from datetime import datetime
 
 import config
 
@@ -45,42 +46,97 @@ class ProjectsMixin:
             return Project(json.loads(r.text))
         raise Exception(f"Couldn't create a project! {r}")
 
+    def has_project(self, name):
+        return name in [p.name for p in self.projects]
+
+    def get_project(self, name):
+        for project in self.projects:
+            if project.name == name:
+                return project
+        return None
+
 
 class Organization(ProjectsMixin):
     def __init__(self, name):
         self.name = name
         self._projects = []
         self.api_path = f'orgs/{name}'
-
-    # @property
-    # def projects(self):
-    #     if not self._projects:
-    #         accept_header = 'application/vnd.github.inertia-preview+json'
-    #         url_path = '/'.join(['orgs', self.name, 'projects'])
-
-    #         r = requests.get(
-    #             f'https://api.github.com/{url_path}',
-    #             auth=(GITHUB_USER, GITHUB_PSX),
-    #             headers={'Accept': accept_header}
-    #         )
-
-    #         if r.status_code == 200:
-    #             self._projects = r.json()
-    #         else:
-    #             raise Exception(f"Couldn't access project board list for  {self.name}")
-    #     return self._projects
+        # self.
 
 class Project:
     def __init__(self, data):
         self._data = data
-        self.columns = []
+        self._columns = []
         self.name = data['name']
         self.state = data['state']
 
-    # @property
-    # def columns(self):
-    #     if not self.columns:
+    def update(self, state):
+        r = requests.patch(
+            self._data['url'],
+            auth=(GITHUB_USER, GITHUB_PSX),
+            headers={'Accept': ProjectsMixin.ACCEPT_HEADER},
+            data=json.dumps({'state': state})
+        )
+        if r.status_code == 200:
+            return True
+        raise Exception("Couldn't update project")
 
+    def fetch_columns(self):
+        r = requests.get(
+            f'{self._data["url"]}/columns',
+            auth=(GITHUB_USER, GITHUB_PSX),
+            headers={'Accept': ProjectsMixin.ACCEPT_HEADER},
+        )
+
+        if r.status_code = 200:
+            self._columns = json.dumps(r.text)
+        else:
+            raise Exception("Couldn't access project columns")
+
+    @property
+    def columns(self):
+        if not self._columns:
+            self.fetch_columns()
+        return self._columns
+
+    def has_column(self, column_name):
+        return column_name in [c['name'] for c in self.columns]
+
+    def get_column(self, column_name):
+        for column in self.columns:
+            if column['name'] == column_name:
+                return column
+        return None
+
+    def add_ticket(column_name, issue_id):
+        column = self.get_column(column_name)
+        if not column:
+            raise Exception("No such column by that name")
+
+        r = requests.post(
+            f'{column["url"]}/cards',
+            auth=(GITHUB_USER, GITHUB_PSX),
+            headers={'Accept': ProjectsMixin.ACCEPT_HEADER},
+            data=json.dumps({'content_id': issue_id, 'content_type': 'Issue'})
+        )
+
+    def create_column(self, column_name):
+        r = requests.post(
+            f'{self._data["url"]}/columns',
+            auth=(GITHUB_USER, GITHUB_PSX),
+            headers={'Accept': ProjectsMixin.ACCEPT_HEADER},
+            data=json.dumps({'name': column_name})
+        )
+        if r.status_code == 200:
+            self.fetch_columns()
+            return True
+
+        raise Exception("Couldn't create a project column")
+
+class Column:
+    def __init__(self, data):
+        self._data = data
+        self.name = data['name']
 
 
 class Milestone:
@@ -112,6 +168,10 @@ class Milestone:
     @property
     def number(self):
         return self._milestone.number
+
+    @property
+    def state(self):
+        return self._milestone.state
 
     def open_tickets(self):
         # TODO: might be nice to rename this to open_issues for consistency
@@ -167,30 +227,30 @@ class Repo(ProjectsMixin):
     def fetch_milestones(self):
         """ Refresh the milestone list from the Github API """
         self._milestones = {
-            x.title: Milestone(self._repo, x) for x in self._repo.get_milestones(state='all')
+            x.title: Milestone(self, x) for x in self._repo.get_milestones(state='all')
         }
 
     def get_last_active_milestone(self, prefix=''):
         """ Return the milestone with the most recent due_on value """
         milestones = sorted(
-            [x for x in self.milestones if x.due_on and x.title.startswith(prefix)],
+            [x for x in self.milestones.values() if x.due_on and x.title.startswith(prefix)],
             key=lambda x: x.due_on
         )
 
         expired_milestones = [
-            x for x in milestones if datetime.date(x) < datetime.date(datetime.today())
+            x for x in milestones if datetime.date(x.due_on) < datetime.date(datetime.today())
         ]
-        return expired_milestones[:-1] if expired_milestones else None
+        return expired_milestones[-1] if expired_milestones else None
 
     def get_active_milestone(self, prefix=''):
         """ Return the milestone with a future due_on value closest to today """
         milestones = sorted(
-            [x for x in self.milestones if x.due_on and x.title.startswith(prefix)],
+            [x for x in self.milestones.values() if x.due_on and x.title.startswith(prefix)],
             key=lambda x: x.due_on
         )
 
         unexpired_milestones = [
-            x for x in milestones if datetime.date(x) > datetime.date(datetime.today())
+            x for x in milestones if datetime.date(x.due_on) > datetime.date(datetime.today())
         ]
         return unexpired_milestones[0] if unexpired_milestones else None
 
