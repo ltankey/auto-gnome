@@ -2,13 +2,13 @@ import sys
 import os.path
 import json
 # FIXME: shouldn't have to mess with sys.path to import my stuff
-sys.path.append(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir)))
-from gh import (Milestone, Issue, Repo)
-from policies import Policy
+# sys.path.append(
+#     os.path.abspath(
+#         os.path.join(
+#             os.path.dirname(__file__),
+#             os.path.pardir)))
+from gnome.gh import (Milestone, Issue, Repo)
+from gnome.policies import Policy
 
 # TODO: this should optionally come from config in .gnome.yml
 SORTING_HAT_MILESTONE = "The Sorting Hat"

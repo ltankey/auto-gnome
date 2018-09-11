@@ -1,7 +1,7 @@
 {
     "dev": {
         "s3_bucket": "chose your unique bucket name",
-        "app_function": "app.app",
+        "app_function": "gnome.app.app",
         "aws_region": "ap-southeast-2",
         "environment_variables": {
             "DEBUG": "True",

@@ -1,0 +1,20 @@
+version: '3.2'
+
+# starts 4 docker containers running minio server instances. Each
+# minio server's web interface will be accessible on the host at port
+# 9001 through 9004.
+services:
+  flask:
+    build:
+      context: .
+      dockerfile: ./compose/local/flask/Dockerfile
+      cache_from:
+        - gnome_local_flask
+    image: gnome_local_flask
+    volumes:
+      - .:/app
+    env_file:
+      - ./.envs/.local/.flask
+    ports:
+      - "8000:8000"
+    command: /start
