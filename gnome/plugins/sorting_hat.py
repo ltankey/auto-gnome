@@ -1,12 +1,7 @@
 import sys
 import os.path
 import json
-# FIXME: shouldn't have to mess with sys.path to import my stuff
-# sys.path.append(
-#     os.path.abspath(
-#         os.path.join(
-#             os.path.dirname(__file__),
-#             os.path.pardir)))
+
 from gnome.gh import (Milestone, Issue, Repo)
 from gnome.policies import Policy
 
@@ -46,7 +41,7 @@ class SortingHat(Policy):
 
                 repo = repo_from_event(self.callback)
                 gh_issue = repo.get_issue(payload['issue'])
-                issue = gh.Issue(repo, gh_issue)
+                issue = Issue(repo, gh_issue)
 
                 if action == 'created':
                     if not issue.has_milestone():
@@ -71,7 +66,7 @@ class SortingHat(Policy):
 
                 repo = repo_from_event(self.callback)
                 gh_milestone = repo.get_milestone(payload[''])
-                milestone = gh.Milestone(repo, gh_milestone)
+                milestone = Milestone(repo, gh_milestone)
 
                 repo.ensure_milestone_exists(
                     SORTING_HAT_MILESTONE)
