@@ -44,7 +44,7 @@ Ultimately, interesting stuff is delegated to plugins. All plugins must provide 
 app.py
 ^^^^^^
 
-.. automodule:: app
+.. automodule:: gnome.app
    :members:
    :undoc-members:
 
