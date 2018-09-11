@@ -1,3 +1,9 @@
+"""
+Flask API that processes callback messages
+from GitHub (or localhost).
+Messages are validated,
+then dispatched to all configured policies.
+"""
 from flask import Flask, request, abort
 import json
 import sys
