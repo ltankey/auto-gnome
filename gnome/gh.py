@@ -4,10 +4,10 @@ import yaml
 import base64
 from github import Github
 
-import config
+from config import settings
 
-GITHUB_USER = config.GITHUB_USER
-GITHUB_PSX = config.GITHUB_PSX
+GITHUB_USER = settings.GITHUB_USER
+GITHUB_PSX = settings.GITHUB_PSX
 
 gh = Github(GITHUB_USER, GITHUB_PSX)
 
@@ -245,4 +245,3 @@ class EventSourceValidator:
             if ipaddress.ip_address(request_ip) in ipaddress.ip_network(block):
                 return True
         return False
-

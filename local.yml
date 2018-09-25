@@ -1,0 +1,17 @@
+version: '3.2'
+
+services:
+  flask:
+    build:
+      context: .
+      dockerfile: ./compose/local/flask/Dockerfile
+      cache_from:
+        - gnome_local_flask
+    image: gnome_local_flask
+    volumes:
+      - .:/app
+    env_file:
+      - ./.envs/.local/.flask
+    ports:
+      - "8000:8000"
+    command: /start

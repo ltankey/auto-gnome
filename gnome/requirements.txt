@@ -3,5 +3,8 @@ zappa
 PyGithub
 requests
 ipaddress
-PyYAML
+PyYAML==3.12
 pytest
+pylint
+python-dotenv
+envparse

@@ -5,9 +5,9 @@ import os
 import requests
 import ipaddress
 from github import Github
-from gh import Repo
+from gnome.gh import Repo
 
-import policies
+import gnome.policies
 
 
 # FIXME: DEBUG should be comming from the environment!!!
@@ -18,7 +18,7 @@ GITHUB_SPECIAL_HEADERS = ('X-Hub-Signature',
                           'X-GitHub-Event')
 
 # FIXME: elaborate on list of forbidden policy names
-# "Policy" is the abstract base class defined in policies.__init__.py
+# "Policy" is the abstract base class defined in gnome.policies.__init__.py
 # We should probably prohibit all the __builtins__ and other python
 # reserved words, becuase havok.
 #
@@ -42,8 +42,8 @@ class Config(object):
     """
     def __init__(self, callback):
         self.callback = callback
-        self.payload= callback.payload()
-        self._yaml=None
+        self.payload = callback.payload()
+        self._yaml = None
 
     def get_yaml(self):
         if self._yaml:
@@ -72,10 +72,10 @@ class Config(object):
         for policy_name in parsed_yml['policies']:
             if policy_name in FORBIDDEN_POLICY_NAMES:
                 bad_news.append((policy_name, "forbidden"))
-            elif policy_name not in policies.MANIFEST.keys():
+            elif policy_name not in gnome.policies.MANIFEST.keys():
                 bad_news.append((policy_name, "not found"))
             else:
-                policy_class = policies.MANIFEST.get(policy_name, None)
+                policy_class = gnome.policies.MANIFEST.get(policy_name, None)
                 activities.append(policy_class(self, self.callback))
 
         if len(bad_news) > 0:

@@ -1,8 +1,8 @@
 import yaml
 import logging
 import dateutil.parser
-from policies import Policy
-from gh import Repo
+from gnome.policies import Policy
+from gnome.gh import Repo
 
 
 logger = logging.getLogger(__file__)
@@ -58,6 +58,3 @@ class PropagateMilestones(Policy):
                 milestone =  repo.milestones.get(title)
                 if milestone:
                     milestone._milestone.edit(title, state='closed')
-
-
-

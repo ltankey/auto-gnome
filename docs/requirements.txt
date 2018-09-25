@@ -1,4 +1,5 @@
 sphinx
 paver
 cogapp
--r ../src/requirements.txt
+
+-r ../requirements/base.txt

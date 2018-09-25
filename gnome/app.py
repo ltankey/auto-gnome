@@ -1,17 +1,21 @@
+"""
+Flask API that processes callback messages
+from GitHub (or localhost).
+Messages are validated,
+then dispatched to all configured policies.
+"""
 from flask import Flask, request, abort
-from github import Github
 import json
-import requests
 import sys
-import yaml
-import config
-from util import (Config, CallbackEvent)
-from gh import EventSourceValidator
+from config import settings
+from gnome.util import (Config, CallbackEvent)
+from gnome.gh import EventSourceValidator
 
 # verbose logging
-DEBUG = config.DEBUG
+DEBUG = settings.DEBUG
 
 app = Flask(__name__)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -47,4 +51,3 @@ def index():
 
 if __name__ == '__main__':
     app.run()
-

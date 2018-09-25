@@ -20,7 +20,7 @@ sys.path.append(
                 os.path.pardir)))
 
 # patchery
-import gh
+import gnome.gh
 gh.requests.get = mock_get
 
 # actual test code...
@@ -36,7 +36,7 @@ class EventSourceValidatorTestCase(unittest.TestCase):
         When testing ip_str_is_valid
         Then validity is True
         """
-        val = gh.EventSourceValidator()
+        val = gnome.gh.EventSourceValidator()
         validity = val.ip_str_is_valid('127.0.0.1')
         self.assertTrue(validity)
 
@@ -46,7 +46,7 @@ class EventSourceValidatorTestCase(unittest.TestCase):
         When testing ip_str_is_valid
         Then validity is True
         """
-        val = gh.EventSourceValidator()
+        val = gnome.gh.EventSourceValidator()
         for addr in GOOD_MOCK_ADDRESSES:
             validity = val.ip_str_is_valid(addr)
             self.assertTrue(validity)
@@ -57,7 +57,7 @@ class EventSourceValidatorTestCase(unittest.TestCase):
         When testing ip_str_is_valid
         Then validity is False
         """
-        val = gh.EventSourceValidator()
+        val = gnome.gh.EventSourceValidator()
         for addr in BAD_MOCK_ADDRESSES:
             validity = val.ip_str_is_valid(addr)
             self.assertFalse(validity)
@@ -74,7 +74,7 @@ class RepoTestCase(unittest.TestCase):
         payload = cb.payload()
         # we require construction without exception
         try:
-            repo = gh.Repo(payload['repository']['full_name'])
+            repo = gnome.gh.Repo(payload['repository']['full_name'])
             was_error = False
         except:
             was_error = True
@@ -88,7 +88,7 @@ class RepoEnsureMilestoneExistsTestCase(unittest.TestCase):
         When I call repo.ensure_milestone_exists
         Then no new milestone is created
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo.milestone_exists = MagicMock(return_value=True)
         repo.create_milestone = MagicMock()
         repo.ensure_milestone_exists('foo')
@@ -100,7 +100,7 @@ class RepoEnsureMilestoneExistsTestCase(unittest.TestCase):
         When I call repo.ensure_milestone_exists
         Then a new milestone is created
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo.milestone_exists = MagicMock(return_value=False)
         repo.create_milestone = MagicMock()
         repo.ensure_milestone_exists('foo')
@@ -114,10 +114,10 @@ class RepoEnsureMilestoneHasDueDateTestCase(unittest.TestCase):
         When I call repo.ensure_milestone_has_due_date
         Then the due date is updated as specified
         """
-        DATE =  '2012-10-09T23:39:01Z'
-        repo = gh.repo_from_callback(MockCallback())
+        DATE = '2012-10-09T23:39:01Z'
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo.milestone_exists = MagicMock(return_value=True)
-        mm = gh.Milestone('some/repo', '_milestone')
+        mm = gnome.gh.Milestone('some/repo', '_milestone')
         mm.get_due_date = MagicMock(return_value=None)
         mm.set_due_date = MagicMock()
         repo.get_milestone = MagicMock(return_value=mm)
@@ -132,9 +132,9 @@ class RepoEnsureMilestoneHasDueDateTestCase(unittest.TestCase):
         Then the due date is not updated
         """
         DATE =  '2012-10-09T23:39:01Z'
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo.milestone_exists = MagicMock(return_value=True)
-        mm = gh.Milestone('some/repo', '_milestone')
+        mm = gnome.gh.Milestone('some/repo', '_milestone')
         mm.get_due_date = MagicMock(return_value=DATE)
         mm.set_due_date = MagicMock()
         repo.get_milestone = MagicMock(return_value=mm)
@@ -149,11 +149,11 @@ class RepoEnsureMilestoneHasDueDateTestCase(unittest.TestCase):
         When I call repo.ensure_milestone_has_due_date
         Then the due date is updated
         """
-        DATE =  '2012-10-09T23:39:01Z'
+        DATE = '2012-10-09T23:39:01Z'
         WRONG_DATE = '2030-10-09T23:39:01Z'
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo.milestone_exists = MagicMock(return_value=True)
-        mm = gh.Milestone('some/repo', '_milestone')
+        mm = gnome.gh.Milestone('some/repo', '_milestone')
         mm.get_due_date = MagicMock(return_value=WRONG_DATE)
         mm.set_due_date = MagicMock()
         repo.get_milestone = MagicMock(return_value=mm)
@@ -168,25 +168,25 @@ class MockMilestoneFoo:
     Dummy pygithub.Milestone.Milestone thing for testing.
 
     Always titled "foo", exists to support the
-    MockFooMilestoneWrapper. 
+    MockFooMilestoneWrapper.
     """
     EXPECTED_TICKETS = ('A', 'B', 'C')
 
     def __init__(self):
         self.title = 'foo'
-        
+
 
 class MockFooMilestoneWrapper:
     """
-    Dummy gh.Milestone for testing. Has a private _milestone
+    Dummy gnome.gh.Milestone for testing. Has a private _milestone
     attribute that is a MockMilestoneFoo.
 
-    Exists to be monkeypatched into a gh.Repo to block
+    Exists to be monkeypatched into a gnome.gh.Repo to block
     some extranious calls to GitHub during testing.
     """
     def __init__(self):
         self._milestone = MockMilestoneFoo()
-        self.repo = gh.repo_from_callback(MockCallback())
+        self.repo = gnome.gh.repo_from_callback(MockCallback())
         self.repo._repo.get_issues = MagicMock(
             return_val=self._milestone.EXPECTED_TICKETS)
 
@@ -198,7 +198,7 @@ class RepoMilestoneExistsTestCase(unittest.TestCase):
         When I call repo.milestone_exists
         Then True is returned
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo._milestones = (MockFooMilestoneWrapper(),)
         self.assertTrue(repo.milestone_exists('foo'))
 
@@ -209,7 +209,7 @@ class RepoMilestoneExistsTestCase(unittest.TestCase):
         When I call repo.milestone_exists
         Then False is returned
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo._milestones = (MockFooMilestoneWrapper(),)
         self.assertFalse(repo.milestone_exists('bar'))
 
@@ -221,7 +221,7 @@ class RepoGetMilestoneTestCase(unittest.TestCase):
         When I call repo.get_milestone on it's name
         Then None is returned
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo._milestones = (MockFooMilestoneWrapper(),)
         found = repo.get_milestone('bar')  # not 'foo'
         self.assertFalse(found)
@@ -232,7 +232,7 @@ class RepoGetMilestoneTestCase(unittest.TestCase):
         when I call repo.get_milestone on it's name
         then not None is returned
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo._milestones = (MockFooMilestoneWrapper(),)
         found = repo.get_milestone('foo')
         self.assertTrue(found)
@@ -243,7 +243,7 @@ class RepoCreateMilestoneTestCase(unittest.TestCase):
         """
         Don't ask.
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo._milestones = (MockFooMilestoneWrapper(),)
         # 'foo' != 'bar'
         self.assertFalse(repo.get_milestone('bar'))
@@ -254,7 +254,7 @@ class RepoCreateMilestoneTestCase(unittest.TestCase):
         When I call repo.create_milestone
         Then the milestone is created
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo._milestones = (MockFooMilestoneWrapper(),)
         create_milestone_mock = MagicMock()
         repo._repo.create_milestone = create_milestone_mock
@@ -268,8 +268,8 @@ class RepoCreateMilestoneTestCase(unittest.TestCase):
         idempotency.
         """
         # I call that Haiku "then nothing happens"
-        
-        repo = gh.repo_from_callback(MockCallback())
+
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo._milestones = (MockFooMilestoneWrapper(),)
         create_milestone_mock = MagicMock()
         repo._repo.create_milestone = create_milestone_mock
@@ -285,11 +285,11 @@ class MilestoneInitTestCase(unittest.TestCase):
         When I initiate a Milestone
         Then no errors are raised
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         repo._repo.create_milestone = MagicMock()
         gh_milestone = MockMilestoneFoo()
         try:
-            mlstn = gh.Milestone(repo, gh_milestone)
+            mlstn = gnome.gh.Milestone(repo, gh_milestone)
             was_error = False
         except:
             was_error = True
@@ -299,9 +299,9 @@ class MilestoneInitTestCase(unittest.TestCase):
 class MilestoneOpenTicketsTestCase(unittest.TestCase):
 
     def test_all_open_tickets_returned(self):
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         ghm = MockMilestoneFoo()
-        m = gh.Milestone(repo, ghm)
+        m = gnome.gh.Milestone(repo, ghm)
         m.repo._repo.get_issues = MagicMock(
             return_value=MockMilestoneFoo.EXPECTED_TICKETS)
         found = []
@@ -313,9 +313,9 @@ class MilestoneOpenTicketsTestCase(unittest.TestCase):
             self.assertTrue(t in found)
 
     def test_no_extranious_tickets_returned(self):
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         ghm = MockMilestoneFoo()
-        m = gh.Milestone(repo, ghm)
+        m = gnome.gh.Milestone(repo, ghm)
         m.repo._repo.get_issues = MagicMock(
             return_value=MockMilestoneFoo.EXPECTED_TICKETS)
         found = []
@@ -334,10 +334,10 @@ class IssueInitTestCase(unittest.TestCase):
         When I initiate an Issue
         Then no errors are raised
         """
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         gh_issue = MagicMock()
         try:
-            i = gh.Issue(repo, gh_issue)
+            i = gnome.gh.Issue(repo, gh_issue)
             was_error = False
         except:
             was_error = True
@@ -346,43 +346,43 @@ class IssueInitTestCase(unittest.TestCase):
 
 class IssueHasMilestoneTestCase(unittest.TestCase):
     def test_false_if_no_milestone(self):
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         gh_issue = MagicMock()
         gh_issue.milestone = False
-        i = gh.Issue(repo, gh_issue)
+        i = gnome.gh.Issue(repo, gh_issue)
         self.assertFalse(i.has_milestone())
 
     def test_true_if_has_milestone(self):
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         gh_issue = MagicMock()
         gh_issue.milestone = MagicMock()
-        i = gh.Issue(repo, gh_issue)
+        i = gnome.gh.Issue(repo, gh_issue)
         self.assertTrue(i.has_milestone())
 
 
 class IssueMoveToMilestoneTestCase(unittest.TestCase):
     def test_milestone_not_exists_then_created(self):
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         gh_issue = MagicMock()
         #gh_issue.milestone = False
         repo.milestone_exists = MagicMock(return_value=False)
         repo.create_milestone = MagicMock()
         repo.get_milestone = MagicMock()
 
-        i = gh.Issue(repo, gh_issue)
+        i = gnome.gh.Issue(repo, gh_issue)
         i.move_to_milestone('x')
 
         repo.create_milestone.assert_called()
 
     def test_repo_exists_then_not_created(self):
-        repo = gh.repo_from_callback(MockCallback())
+        repo = gnome.gh.repo_from_callback(MockCallback())
         gh_issue = MagicMock()
         #gh_issue.milestone = False
         repo.milestone_exists = MagicMock(return_value=True)
         repo.create_milestone = MagicMock()
         repo.get_milestone = MagicMock()
 
-        i = gh.Issue(repo, gh_issue)
+        i = gnome.gh.Issue(repo, gh_issue)
         i.move_to_milestone('x')
 
         repo.create_milestone.assert_not_called()

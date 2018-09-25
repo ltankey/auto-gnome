@@ -1,6 +1,6 @@
 import sys
 import json
-from policies import Policy
+from gnome.policies import Policy
 
 class VerboseCallbackLogging(Policy):
     """
@@ -29,6 +29,5 @@ class VerboseCallbackLogging(Policy):
         # the inherited constructor creates self.callback
         callback_payload = self.callback.payload()
         # all this policy does is log the callback payload to stdout
-        print(json.dumps(callback_payload, sort_keys=True, indent=4), 
+        print(json.dumps(callback_payload, sort_keys=True, indent=4),
               file=sys.stdout)
-

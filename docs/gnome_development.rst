@@ -33,9 +33,9 @@ Hacking the gnome itself
 Codebase
 --------
 
-The callback service is provided by a Flask app, and the code for this is in `src/app.py`. It's only job is to receive callbacks from GitHub and process them.
+The callback service is provided by a Flask app, and the code for this is in `gnome/app.py`. It's only job is to receive callbacks from GitHub and process them.
 
-app.py delegates the interesting stuff to code in `src/utils.py`. This does two things, interacts with GitHub to obtain configuration, then delegates configured tasks to the plugins (via the plugin register, `src/policies/__init__.py`)
+app.py delegates the interesting stuff to code in `gnome/utils.py`. This does two things, interacts with GitHub to obtain configuration, then delegates configured tasks to the plugins (via the plugin register, `gnome/policies/__init__.py`)
 
 Ultimately, interesting stuff is delegated to plugins. All plugins must provide a `dispatch_gnome()` method. If configured, this is called with data from the originating callback event (and config).
 
@@ -44,12 +44,12 @@ Ultimately, interesting stuff is delegated to plugins. All plugins must provide 
 app.py
 ^^^^^^
 
-.. automodule:: app
+.. automodule:: gnome.app
    :members:
    :undoc-members:
 
 
-src/utils.py
+gnome/utils.py
 ^^^^^^^^^^^^
 
 .. automodule:: util
@@ -57,7 +57,7 @@ src/utils.py
    :undoc-members:
 
 
-src/gh.py
+gnome/gh.py
 ^^^^^^^^^
 
 .. automodule:: gh
@@ -65,7 +65,7 @@ src/gh.py
    :undoc-members:
 
 
-src/policies/__init__.py
+gnome/policies/__init__.py
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 The util module instantiates the `policy` module. This is a very simple thing, all it does is import the relevant classes (from modules in the plugins directory).
@@ -89,4 +89,3 @@ Tests
 .. automodule:: tests.test_callback
    :members:
    :undoc-members:
-

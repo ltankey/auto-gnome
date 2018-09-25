@@ -1,0 +1,8 @@
+flask
+zappa
+PyGithub
+requests
+ipaddress
+PyYAML==3.12
+python-dotenv
+envparse==0.2.0
