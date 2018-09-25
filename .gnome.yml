@@ -1,4 +1,4 @@
 policies:
  - VerboseCallbackLogging
- - NonExistantPolicy
+ - SyncProjectMilestones
  - SortingHat
